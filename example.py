@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 import sys
 
-from pyrpc import RpcModule, RpcRemote
+from pyrpc import RpcModule, RpcRemote, RpcApplication
 
-
-
-class FooNode(object):
+class FooNode(RpcApplication):
 
     def __init__(self, port, name):
+        self.addr = ("localhost", port)
         self.name = name
-        self.port = port
-        RpcModule.Init(port, self)
+        self.Start()
 
     @RpcModule.Method
     def hello(self, sender) -> str:

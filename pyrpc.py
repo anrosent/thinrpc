@@ -131,13 +131,9 @@ class _RpcServer(object):
         
         self.funs[f.__name__] = f
         if __debug__:
-            print("returning wrapper")
             def wrapper(*args, **kwargs):
-                print("wrapper\n")
-                print("RPC Received: %s, %s, %s" % (f.__name__, args, kwargs))
                 return f(*args, **kwargs)
             return wrapper
-        print("returning f")
         return f
 
 
