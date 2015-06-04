@@ -85,6 +85,8 @@ class _RpcServer(object):
                     val = self._dispatch(msg, fun)
                     reply = RpcMessage(ok=True, val=val)
                     self._send(conn, reply)
+                else:
+                    self._send(conn, self.error("no such method"))
             except ValueError:
                 self._send(conn, self.error("malformed message"))
              
