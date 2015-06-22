@@ -2,9 +2,11 @@ import socket
 import selectors
 import types
 import os
+import sys
 import imp
 import json
 
+from urllib.parse import splitnport as parse_addr
 from threading import Thread
 
 RECV_SIZE = 1024
@@ -37,6 +39,15 @@ class GolangStyleImplLoaderMeta(type):
 ################################################################################
 
 class RpcMessage(dict):
+
+    STATUS_OK = 0
+    STATUS_ERR = 1
+    STATUS_WARN = 2
+
+    def __init__(self, *args, **kwargs):
+        super(RpcMessage, self).__init__(*args, **kwargs)
+        for k, v in kwargs.items():
+            self.__setattr__(k, v)
 
     def Encode(self, enc):
         if enc == "json":
@@ -75,6 +86,7 @@ class _RpcServer(object):
 
     @_checkReady
     def _handle(self, conn):
+        sender = RpcRemote(conn.getpeername())
         data = conn.recv(RECV_SIZE)
         if data:
             try:
@@ -82,8 +94,9 @@ class _RpcServer(object):
                 method = msg["method"]
                 if method in self.funs:
                     fun = self.funs[method]
-                    val = self._dispatch(msg, fun)
-                    reply = RpcMessage(ok=True, val=val)
+                    val = self._dispatch(sender, msg, fun)
+                    reply = RpcMessage(ok=True)
+                    reply.update(val)
                     self._send(conn, reply)
                 else:
                     self._send(conn, self.error("no such method"))
@@ -95,10 +108,11 @@ class _RpcServer(object):
             conn.close()
 
     @_checkReady
-    def _dispatch(self, msg, fun):
+    def _dispatch(self, sender, msg, fun):
 
         # skip 'self' arg
         argnames = fun.__code__.co_varnames[1:]
+        msg['sender'] = sender
         args = [msg[arg] for arg in argnames]
         return fun(self.app, *args)
 
@@ -106,8 +120,11 @@ class _RpcServer(object):
         self.app = app
         self.iface, self.port = app.addr
         self.running = True
+        self.killsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sel.register(self.killsock, selectors.EVENT_READ, lambda f:3)
 
         self.sock = socket.socket()
+        # TODO reuseaddr
         self.sock.bind((self.iface, self.port))
         self.sock.listen(10)
         self.sock.setblocking(False)
@@ -125,9 +142,6 @@ class _RpcServer(object):
         print("dispatcher started")
         self.t.start()
 
-    def Stop(self):
-        self.running = False
-        #TODO: channel-based stopping mechanism
 
     def Method(self, f):
         
@@ -139,6 +153,7 @@ class _RpcServer(object):
         return f
 
 
+# TODO: add WS connection option
 class RpcRemote(object):
 
     def __init__(self, addr):
@@ -165,11 +180,36 @@ class RpcRemote(object):
             return self._call(self.addr, msg)
         return _caller
 
+    def __hash__(self):
+        return self.addr.__hash__()
+
+    @staticmethod
+    def from_str(addr):
+        host, port = parse_addr(addr)
+        return RpcRemote((host, port))
+
+    def __str__(self):
+        return str(self.addr)
+
+
 class RpcApplication(object, metaclass=GolangStyleImplLoaderMeta):
 
     def Start(self):
+        Start()
         RpcModule.Init(self)
+
+    #TODO: channel-based stopping mechanism
+    def Stop(self):
+        RpcModule.running = False
+        RpcModule.t.join()
+    
+    def Kill(self):
+        self.Stop()
+        sys.exit(1)
 
 
 # Public Singleton
+def Start():
+    global RpcModule
+
 RpcModule = _RpcServer()
