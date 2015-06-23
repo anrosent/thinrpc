@@ -4,4 +4,4 @@ import sys
 
 port = int(sys.argv[1])
 rn = pyrpc.RpcRemote(("localhost", port))
-print(rn.hello(sender="anson"))
+print(rn.hello())

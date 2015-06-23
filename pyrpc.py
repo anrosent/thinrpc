@@ -95,13 +95,12 @@ class _RpcServer(object):
                 if method in self.funs:
                     fun = self.funs[method]
                     val = self._dispatch(sender, msg, fun)
-                    reply = RpcMessage(ok=True)
-                    reply.update(val)
+                    reply = RpcMessage(ok=True, result=val)
                     self._send(conn, reply)
                 else:
                     self._send(conn, self.error("no such method"))
-            except ValueError:
-                self._send(conn, self.error("malformed message"))
+            except ValueError as e:
+                self._send(conn, self.error("malformed message: %s" % str(e)))
              
         else:
             self.sel.unregister(conn)
