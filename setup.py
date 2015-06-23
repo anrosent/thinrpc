@@ -1,7 +1,7 @@
 from distutils.core import setup
 import os.path
 
-README = os.path.join(os.path.dirname(__file__), 'README')
+README = os.path.join(os.path.dirname(__file__), 'README.md')
 
 version = '0.1.10'
 

@@ -17,4 +17,4 @@ class FooNode(RpcApplication):
     
 if __name__ == '__main__':
     port = int(sys.argv[1])
-    node = FooNode(port, "Anson Node")
+    node = FooNode(port, "Anson")
