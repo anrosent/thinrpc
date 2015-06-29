@@ -3,14 +3,15 @@ import os.path
 
 README = os.path.join(os.path.dirname(__file__), 'README.md')
 
-version = '0.1.10'
+version = '0.1.15'
 
 with open(README) as fp:
     longdesc = fp.read()
 
 setup(name='thinrpc',
+    include_package_data=True,
     version=version,
-    description='Thin RPC framework',
+    description='A Lightweight RPC framework for Python',
     long_description=longdesc,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -25,7 +26,7 @@ setup(name='thinrpc',
     author='Anson Rosenthal',
     author_email='anson.rosenthal@gmail.com',
     license='MIT License',
-    url='https://github.com/anrosent/pyrpc.git',
-    py_modules=['pyrpc'],
+    url='https://github.com/anrosent/thinrpc.git',
+    py_modules=['thinrpc'],
 )
 

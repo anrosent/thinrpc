@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
-from pyrpc import RpcModule, RpcRemote, RpcApplication
+from thinrpc import RpcModule, RpcRemote, RpcApplication
 
 class FooNode(RpcApplication):
 

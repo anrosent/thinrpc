@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import pyrpc
+import thinrpc
 import sys
 
 port = int(sys.argv[1])
-rn = pyrpc.RpcRemote(("localhost", port))
+rn = thinrpc.RpcRemote(("localhost", port))
 print(rn.hello())

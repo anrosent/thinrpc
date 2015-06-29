@@ -1,7 +1,7 @@
-PyRPC: A Thin RPC Framework
+thirpc: A Lightweight RPC Framework for Python
 ===
 
-This library provides a base class and some decorators to make it easy to build distributed applications. RPC endpoints are defined as class methods and decorated with ```RpcModule.Method```, which registers the endpoint with the non-blocking RPC server dispatching requests to registered methods. 
+This library provides a base class and some decorators to make it easy to build distributed applications. RPC endpoints are defined as class methods and decorated with ```RpcModule.Method```, which registers the endpoint with the event-based RPC server dispatching requests to registered methods. 
 
 The ```RpcRemote``` class is an abstraction allowing applications to invoke methods on remote nodes using method call syntax. See the example below for an illustration!
 
@@ -12,7 +12,7 @@ The ```RpcRemote``` class is an abstraction allowing applications to invoke meth
 '''
 import sys
 
-from pyrpc import RpcModule, RpcRemote, RpcApplication
+from thinrpc import RpcModule, RpcRemote, RpcApplication
 
 class FooNode(RpcApplication):
 
@@ -36,11 +36,11 @@ And now for a simple client script that invokes the ```hello``` method on the se
 
 ```python
 
-import pyrpc
+import thinrpc
 import sys
 
 # Say hi to the server!
-server = pyrpc.RpcRemote(("localhost", 9090))
+server = thinrpc.RpcRemote(("localhost", 9090))
 print(server.hello())
 #   {'ok': True, 'result': "Hi, ('127.0.0.1', 44222)! It's Anson"}
 ```
