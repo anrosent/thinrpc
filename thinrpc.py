@@ -137,8 +137,6 @@ class _RpcServer(object):
                     cb = key.data
                     cb(key.fileobj)
         self.t = Thread(target=run, name="RpcDispatcher %s:%s" % (self.iface, self.port))
-
-        print("dispatcher started")
         self.t.start()
 
 
