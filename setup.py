@@ -14,7 +14,7 @@ setup(name='thinrpc',
     description='A Lightweight RPC framework for Python',
     long_description=longdesc,
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
