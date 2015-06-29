@@ -1,4 +1,4 @@
-thirpc: A Lightweight RPC Framework for Python
+thinrpc: A Lightweight RPC Framework for Python
 ===
 
 This library provides a base class and some decorators to make it easy to build distributed applications. RPC endpoints are defined as class methods and decorated with ```RpcModule.Method```, which registers the endpoint with the event-based RPC server dispatching requests to registered methods. 
