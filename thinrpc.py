@@ -153,8 +153,9 @@ class _RpcServer(object):
 # TODO: add WS connection option
 class RpcRemote(object):
 
-    def __init__(self, addr):
+    def __init__(self, addr, timeout=None):
         self.addr = addr
+        self.timeout = timeout
 
     def __getattr__(self, attr):
         ''' Override method calls -> magic '''
@@ -163,6 +164,7 @@ class RpcRemote(object):
     def _call(self, addr, msg):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(self.timeout)
             s.connect(addr)
             s.sendall(msg.Encode(ENC))
             data = s.recv(RECV_SIZE)
