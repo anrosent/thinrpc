@@ -8,7 +8,7 @@ class FooNode(RpcApplication):
     def __init__(self, port, name):
         self.addr = ("localhost", port)
         self.name = name
-        self.Start()
+        self.Start(single_threaded=False)
 
     @RpcModule.Method
     def hello(self, sender) -> str:

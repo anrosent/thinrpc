@@ -14,13 +14,33 @@ ENC = "json"
 
 ################################################################################
 
-def acceptor(srv):
-    def f(sock):
+def single_threaded_acceptor(srv):
+    def handle_new_conn(sock):
         conn, addr = sock.accept()
         conn.setblocking(False)
         srv.sel.register(conn, selectors.EVENT_READ, srv._handle)
-    return f
+    return handle_new_conn
 
+def single_threaded_destructor(srv, conn):
+    srv.sel.unregister(conn)
+    conn.close()
+
+def multi_threaded_destructor(srv, conn):
+    conn.close()
+
+
+def multi_thread_handler(srv, conn):
+    print("thread started")
+    while True:
+        shutdown = srv._handle(conn)
+        if shutdown:
+            break
+
+def multi_threaded_acceptor(srv):
+    def handle_new_conn(sock):
+        conn, addr = sock.accept()
+        Thread(target=multi_thread_handler, args=[srv, conn]).start()
+    return handle_new_conn
 
 class GolangStyleImplLoaderMeta(type):
     '''
@@ -103,8 +123,8 @@ class _RpcServer(object):
                 self._send(conn, self.error("malformed message: %s" % str(e)))
              
         else:
-            self.sel.unregister(conn)
-            conn.close()
+            self.conn_destructor(self, conn)
+            return True
 
     @_checkReady
     def _dispatch(self, sender, msg, fun):
@@ -115,12 +135,19 @@ class _RpcServer(object):
         args = [msg[arg] for arg in argnames]
         return fun(self.app, *args)
 
-    def Init(self, app):
+    def Init(self, app, single_threaded=True):
         self.app = app
         self.iface, self.port = app.addr
         self.running = True
         self.killsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sel.register(self.killsock, selectors.EVENT_READ, lambda f:3)
+        
+        if single_threaded:
+            self.acceptor = single_threaded_acceptor
+            self.conn_destructor = single_threaded_destructor
+        else:
+            self.acceptor = multi_threaded_acceptor
+            self.conn_destructor = multi_threaded_destructor
 
         self.sock = socket.socket()
         # TODO reuseaddr
@@ -128,7 +155,7 @@ class _RpcServer(object):
         self.sock.listen(10)
         self.sock.setblocking(False)
 
-        self.sel.register(self.sock, selectors.EVENT_READ, acceptor(self))
+        self.sel.register(self.sock, selectors.EVENT_READ, self.acceptor(self))
 
         def run():
             while self.running:
@@ -193,9 +220,9 @@ class RpcRemote(object):
 
 class RpcApplication(object, metaclass=GolangStyleImplLoaderMeta):
 
-    def Start(self):
+    def Start(self, **kwargs):
         Start()
-        RpcModule.Init(self)
+        RpcModule.Init(self, **kwargs)
 
     #TODO: channel-based stopping mechanism
     def Stop(self):
