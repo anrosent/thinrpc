@@ -5,6 +5,7 @@ import os
 import sys
 import imp
 import json
+import logging
 
 from urllib.parse import splitnport as parse_addr
 from threading import Thread
@@ -12,7 +13,15 @@ from threading import Thread
 RECV_SIZE = 1024
 ENC = "json"
 
+log_format = "[%(mode)s] %(message)s"
+logging.basicConfig(format=log_format)
+logger = logging.getLogger(__name__)
+
 ################################################################################
+
+# TODO: debug mode
+# TODO: val, err method return signature
+# TODO: debug the multithreaded mode.......
 
 def single_threaded_acceptor(srv):
     def handle_new_conn(sock):
@@ -30,7 +39,6 @@ def multi_threaded_destructor(srv, conn):
 
 
 def multi_thread_handler(srv, conn):
-    print("thread started")
     while True:
         shutdown = srv._handle(conn)
         if shutdown:
@@ -107,20 +115,28 @@ class _RpcServer(object):
     @_checkReady
     def _handle(self, conn):
         sender = RpcRemote(conn.getpeername())
+        
         data = conn.recv(RECV_SIZE)
+        logger.debug("Received data '%s' from client %s", data, sender, extra={"mode":"server"})
         if data:
             try:
                 msg = RpcMessage.Decode(data) 
                 method = msg["method"]
+                logger.debug("[Client %s][Method %s][Msg %s]", sender, method, msg, extra={"mode":"server"})
                 if method in self.funs:
                     fun = self.funs[method]
+
+                    #TODO: impl of multiple return for error handling is here
                     val = self._dispatch(sender, msg, fun)
+                    logger.debug("[Client %s][Method %s][Result %s]", sender, method, val, extra={"mode":"server"})
                     reply = RpcMessage(ok=True, result=val)
                     self._send(conn, reply)
                 else:
+                    logger.debug("[Client %s][Method %s][NoSuchMethod]", sender, method, extra={"mode":"server"})
                     self._send(conn, self.error("no such method"))
             except ValueError as e:
                 self._send(conn, self.error("malformed message: %s" % str(e)))
+                logger.debug("[Client %s][Method %s][BadMsg %s]", sender, method, msg, extra={"mode":"server"})
              
         else:
             self.conn_destructor(self, conn)
@@ -131,11 +147,14 @@ class _RpcServer(object):
 
         # skip 'self' arg
         argnames = fun.__code__.co_varnames[1:]
+
+        # TODO: more robust insertion of sender
         msg['sender'] = sender
         args = [msg[arg] for arg in argnames]
         return fun(self.app, *args)
 
     def Init(self, app, single_threaded=True):
+        logger.info("Starting server on %s, single_threaded=%s", app.addr, single_threaded, extra={"mode":"server"})
         self.app = app
         self.iface, self.port = app.addr
         self.running = True
@@ -158,6 +177,7 @@ class _RpcServer(object):
         self.sel.register(self.sock, selectors.EVENT_READ, self.acceptor(self))
 
         def run():
+            logger.info("Server started", extra={"mode":"server"})
             while self.running:
                 events = self.sel.select()
                 for key, _ in events:
@@ -170,10 +190,6 @@ class _RpcServer(object):
     def Method(self, f):
         
         self.funs[f.__name__] = f
-        if __debug__:
-            def wrapper(*args, **kwargs):
-                return f(*args, **kwargs)
-            return wrapper
         return f
 
 
@@ -202,6 +218,7 @@ class RpcRemote(object):
 
     def _makeCaller(self, attr):
         def _caller(**kwargs):
+            logger.debug("[Server %s][Method %s][Args %s]", self.addr, attr, kwargs, extra={"mode":"client"})
             msg = RpcMessage(method=attr, **kwargs)
             return self._call(self.addr, msg)
         return _caller
@@ -221,21 +238,18 @@ class RpcRemote(object):
 class RpcApplication(object, metaclass=GolangStyleImplLoaderMeta):
 
     def Start(self, **kwargs):
-        Start()
         RpcModule.Init(self, **kwargs)
 
     #TODO: channel-based stopping mechanism
     def Stop(self):
+        logger.info("Stopping RPC server....", extra={"mode":"server"})
         RpcModule.running = False
         RpcModule.t.join()
+        logger.info("Server stopped", extra={"mode":"server"})
     
     def Kill(self):
         self.Stop()
+        logger.info("Exiting...", extra={"mode":"server"})
         sys.exit(1)
-
-
-# Public Singleton
-def Start():
-    global RpcModule
 
 RpcModule = _RpcServer()

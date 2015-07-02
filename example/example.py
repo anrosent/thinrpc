@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import sys
 
-from thinrpc import RpcModule, RpcRemote, RpcApplication
+import logging
+from thinrpc import RpcModule, RpcRemote, RpcApplication, logger
+
+logger.setLevel(logging.DEBUG)
 
 class FooNode(RpcApplication):
 
