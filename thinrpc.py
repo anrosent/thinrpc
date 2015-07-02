@@ -146,7 +146,7 @@ class _RpcServer(object):
     def _dispatch(self, sender, msg, fun):
 
         # skip 'self' arg
-        argnames = fun.__code__.co_varnames[1:]
+        argnames = fun.__code__.co_varnames[1:fun.__code__.co_argcount]
 
         # TODO: more robust insertion of sender
         msg['sender'] = sender
