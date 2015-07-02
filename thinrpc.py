@@ -10,6 +10,7 @@ import logging
 from urllib.parse import splitnport as parse_addr
 from threading import Thread
 
+OK = False
 RECV_SIZE = 1024
 ENC = "json"
 
@@ -19,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 ################################################################################
 
-# TODO: debug mode
-# TODO: val, err method return signature
-# TODO: debug the multithreaded mode.......
+# TODO: more robust insertion of sender
 
 def single_threaded_acceptor(srv):
     def handle_new_conn(sock):
@@ -96,9 +95,8 @@ class _RpcServer(object):
     funs = {}
     
     # error check
-
     def error(self, msg):
-        return RpcMessage(ok=False, msg=msg)
+        return RpcMessage(err=msg)
 
     def _checkReady(m):
         def proxy(self, *args):
@@ -126,10 +124,9 @@ class _RpcServer(object):
                 if method in self.funs:
                     fun = self.funs[method]
 
-                    #TODO: impl of multiple return for error handling is here
-                    val = self._dispatch(sender, msg, fun)
+                    err, val = self._dispatch(sender, msg, fun)
                     logger.debug("[Client %s][Method %s][Result %s]", sender, method, val, extra={"mode":"server"})
-                    reply = RpcMessage(ok=True, result=val)
+                    reply = RpcMessage(err=err, result=val)
                     self._send(conn, reply)
                 else:
                     logger.debug("[Client %s][Method %s][NoSuchMethod]", sender, method, extra={"mode":"server"})
@@ -148,7 +145,6 @@ class _RpcServer(object):
         # skip 'self' arg
         argnames = fun.__code__.co_varnames[1:fun.__code__.co_argcount]
 
-        # TODO: more robust insertion of sender
         msg['sender'] = sender
         args = [msg[arg] for arg in argnames]
         return fun(self.app, *args)
@@ -214,7 +210,7 @@ class RpcRemote(object):
             s.close()
             return RpcMessage.Decode(data)
         except Exception as e:
-            return RpcMessage(ok=False, msg=str(e))
+            return RpcMessage(err=str(e), result=None)
 
     def _makeCaller(self, attr):
         def _caller(**kwargs):

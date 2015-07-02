@@ -3,7 +3,7 @@ import os.path
 
 README = os.path.join(os.path.dirname(__file__), 'README.md')
 
-version = '0.1.20'
+version = '0.1.21'
 
 with open(README) as fp:
     longdesc = fp.read()

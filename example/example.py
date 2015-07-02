@@ -2,7 +2,7 @@
 import sys
 
 import logging
-from thinrpc import RpcModule, RpcRemote, RpcApplication, logger
+from thinrpc import RpcModule, RpcRemote, RpcApplication, logger, OK
 
 logger.setLevel(logging.DEBUG)
 
@@ -15,7 +15,7 @@ class FooNode(RpcApplication):
 
     @RpcModule.Method
     def hello(self, sender) -> str:
-        return "Hi, %s! It's %s" % (sender, self.name)
+        return OK, "Hi, %s! It's %s" % (sender, self.name)
 
     
 if __name__ == '__main__':
