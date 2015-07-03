@@ -12,7 +12,7 @@ The ```RpcRemote``` class is an abstraction allowing applications to invoke meth
 '''
 import sys
 
-from thinrpc import RpcModule, RpcRemote, RpcApplication
+from thinrpc import RpcModule, RpcRemote, RpcApplication, OK
 
 class FooNode(RpcApplication):
 
@@ -25,7 +25,7 @@ class FooNode(RpcApplication):
 
     @RpcModule.Method
     def hello(self, sender):
-        return "Hi, %s! It's %s" % (sender, self.name)
+        return OK, "Hi, %s! It's %s" % (sender, self.name)
 
     
 if __name__ == '__main__':
@@ -42,5 +42,5 @@ import sys
 # Say hi to the server!
 server = thinrpc.RpcRemote(("localhost", 9090))
 print(server.hello())
-#   {'ok': True, 'result': "Hi, ('127.0.0.1', 44222)! It's Anson"}
+#{'result': "Hi, ('127.0.0.1', 49440)! It's Anson", 'err': False}
 ```
