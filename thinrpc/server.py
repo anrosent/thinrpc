@@ -10,13 +10,12 @@ import logging
 from urllib.parse import splitnport as parse_addr
 from threading import Thread
 
-OK = False
-RECV_SIZE = 1024
-ENC = "json"
+from thinrpc.message import RpcMessage
+from thinrpc.client import RpcRemote
+from thinrpc import logger, RECV_SIZE, ENC
 
-log_format = "[%(mode)s] %(message)s"
-logging.basicConfig(format=log_format)
-logger = logging.getLogger(__name__)
+OK = False
+
 
 ################################################################################
 
@@ -68,29 +67,6 @@ class GolangStyleImplLoaderMeta(type):
         return super(GolangStyleImplLoaderMeta, cls).__new__(cls, name, bases, dct)
 
 ################################################################################
-
-class RpcMessage(dict):
-
-    STATUS_OK = 0
-    STATUS_ERR = 1
-    STATUS_WARN = 2
-
-    def __init__(self, *args, **kwargs):
-        super(RpcMessage, self).__init__(*args, **kwargs)
-        for k, v in kwargs.items():
-            self.__setattr__(k, v)
-
-    def Encode(self, enc):
-        if enc == "json":
-            return ("%s.%s" % (enc, json.dumps(self))).encode('utf8')
-        raise ValueError("Invalid message enc: %s" % enc)
-
-    @staticmethod
-    def Decode(msgstr):
-        enc, msg = msgstr.decode('utf8').split(".", 1)
-        if enc == "json":
-            return RpcMessage(**json.loads(msg))
-        raise ValueError("Invalid message enc: %s" % enc)
 
 class _RpcServer(object):
     running = False
@@ -191,49 +167,6 @@ class _RpcServer(object):
         
         self.funs[f.__name__] = f
         return f
-
-
-# TODO: add WS connection option
-class RpcRemote(object):
-
-    def __init__(self, addr, timeout=None):
-        self.addr = addr
-        self.timeout = timeout
-
-    def __getattr__(self, attr):
-        ''' Override method calls -> magic '''
-        return self._makeCaller(attr)
-
-    def _call(self, addr, msg):
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(self.timeout)
-            s.connect(addr)
-            s.sendall(msg.Encode(ENC))
-            data = s.recv(RECV_SIZE)
-            s.close()
-            return RpcMessage.Decode(data)
-        except Exception as e:
-            return RpcMessage(err=str(e), result=None)
-
-    def _makeCaller(self, attr):
-        def _caller(**kwargs):
-            logger.debug("[Server %s][Method %s][Args %s]", self.addr, attr, kwargs, extra={"mode":"client"})
-            msg = RpcMessage(method=attr, **kwargs)
-            return self._call(self.addr, msg)
-        return _caller
-
-    def __hash__(self):
-        return self.addr.__hash__()
-
-    @staticmethod
-    def from_str(addr):
-        host, port = parse_addr(addr)
-        return RpcRemote((host, port))
-
-    def __str__(self):
-        return str(self.addr)
-
 
 class RpcApplication(object, metaclass=GolangStyleImplLoaderMeta):
 
