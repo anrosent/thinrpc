@@ -3,7 +3,7 @@ import os.path
 
 README = os.path.join(os.path.dirname(__file__), 'README.md')
 
-version = '0.1.21'
+version = '0.1.23'
 
 with open(README) as fp:
     longdesc = fp.read()
@@ -27,6 +27,6 @@ setup(name='thinrpc',
     author_email='anson.rosenthal@gmail.com',
     license='MIT License',
     url='https://github.com/anrosent/thinrpc.git',
-    py_modules=['thinrpc'],
+    packages=['thinrpc']
 )
 
