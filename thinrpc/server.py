@@ -17,7 +17,6 @@ from thinrpc import logger, RECV_SIZE, ENC, OK
 ################################################################################
 
 # TODO: more robust insertion of sender
-# TODO: pass (Err, result) up to RpcRemote impl so clients can just unpack/test
 # TODO: dynamic namedtuple for 'result' vals
 # TODO: better logging solution for "extra" param (wrapper)
 
