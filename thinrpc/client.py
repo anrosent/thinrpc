@@ -1,5 +1,5 @@
 import socket
-from thinrpc import logger, ENC, RECV_SIZE
+from thinrpc import logger, ENC, RECV_SIZE, OK
 from thinrpc.message import RpcMessage
 
 # TODO: add WS connection option
@@ -21,9 +21,13 @@ class RpcRemote(object):
             s.sendall(msg.Encode(ENC))
             data = s.recv(RECV_SIZE)
             s.close()
-            return RpcMessage.Decode(data)
+            response = RpcMessage.Decode(data)
+            if response.err:
+                return RpcRemoteError(response.err), None
+            else:
+                return OK, response.result
         except Exception as e:
-            return RpcMessage(err=str(e), result=None)
+            return e, None
 
     def _makeCaller(self, attr):
         def _caller(**kwargs):

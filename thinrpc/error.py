@@ -1,0 +1,2 @@
+class RpcRemoteError(Exception):
+    pass

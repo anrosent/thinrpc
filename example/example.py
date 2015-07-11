@@ -2,8 +2,8 @@
 import sys
 
 import logging
-from thinrpc import logger
-from thinrpc.server import RpcModule, RpcApplication, OK
+from thinrpc import logger, OK
+from thinrpc.server import RpcModule, RpcApplication
 from thinrpc.client import RpcRemote
 
 logger.setLevel(logging.DEBUG)

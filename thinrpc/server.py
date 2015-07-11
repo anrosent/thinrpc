@@ -12,10 +12,7 @@ from threading import Thread
 
 from thinrpc.message import RpcMessage
 from thinrpc.client import RpcRemote
-from thinrpc import logger, RECV_SIZE, ENC
-
-OK = False
-
+from thinrpc import logger, RECV_SIZE, ENC, OK
 
 ################################################################################
 
@@ -23,7 +20,6 @@ OK = False
 # TODO: pass (Err, result) up to RpcRemote impl so clients can just unpack/test
 # TODO: dynamic namedtuple for 'result' vals
 # TODO: better logging solution for "extra" param (wrapper)
-# TODO: refactor components into separate modules
 
 def single_threaded_acceptor(srv):
     def handle_new_conn(sock):
