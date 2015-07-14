@@ -120,7 +120,7 @@ class _RpcServer(object):
         # skip 'self' arg
         argnames = fun.__code__.co_varnames[1:fun.__code__.co_argcount]
 
-        msg['sender'] = sender
+        msg[argnames[0]] = sender
         args = [msg[arg] for arg in argnames]
         return fun(self.app, *args)
 
