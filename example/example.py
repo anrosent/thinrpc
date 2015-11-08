@@ -16,7 +16,7 @@ class FooNode(RpcApplication):
         self.Start(single_threaded=False)
 
     @RpcModule.Method
-    def hello(self, sender) -> str:
+    def hello(self, sender):
         return OK, "Hi, %s! It's %s" % (sender, self.name)
 
     

@@ -16,7 +16,6 @@ from thinrpc import logger, RECV_SIZE, ENC, OK
 
 ################################################################################
 
-# TODO: more robust insertion of sender
 # TODO: dynamic namedtuple for 'result' vals
 # TODO: better logging solution for "extra" param (wrapper)
 
@@ -33,7 +32,6 @@ def single_threaded_destructor(srv, conn):
 
 def multi_threaded_destructor(srv, conn):
     conn.close()
-
 
 def multi_thread_handler(srv, conn):
     while True:
@@ -65,7 +63,6 @@ class GolangStyleImplLoaderMeta(type):
 
 class _RpcServer(object):
     running = False
-    enc = "json"
     sel = selectors.DefaultSelector()
     funs = {}
     
@@ -140,7 +137,7 @@ class _RpcServer(object):
             self.conn_destructor = multi_threaded_destructor
 
         self.sock = socket.socket()
-        # TODO reuseaddr
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.iface, self.port))
         self.sock.listen(10)
         self.sock.setblocking(False)
